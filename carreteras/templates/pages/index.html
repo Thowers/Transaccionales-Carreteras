@@ -1,0 +1,107 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Dashboard de Carreteras{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4 border-primary">
+            <div class="card-header bg-primary text-white">1. Registrar Carretera</div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="text" name="nombre_carretera" class="form-control mb-2" placeholder="Nombre (Ej: Vía al Mar)" required>
+                    <select name="categoria" class="form-select mb-2" required>
+                        <option value="">-- Seleccionar Categoría --</option>
+                        {% for cat in categorias %}
+                        <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="btn_carretera" class="btn btn-primary w-100 btn-sm">Guardar Carretera</button>
+                </form>
+            </div>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">Registro de Tramo</div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Carretera</label>
+                        <select name="carretera" class="form-select" required>
+                            {% for c in carreteras %}
+                            <option value="{{ c.id }}">{{ c.nombre }} ({{ c.categoria.nombre }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col"><label class="form-label">KM Inicio</label><input type="number" step="0.1" name="km_inicio" class="form-control" required></div>
+                        <div class="col"><label class="form-label">KM Fin</label><input type="number" step="0.1" name="km_fin" class="form-control" required></div>
+                    </div>
+
+                    <div class="mb-3 mt-3">
+                        <label class="form-label">Trayecto</label>
+                        <div class="d-flex gap-2">
+                            <select name="pueblo_inicio" class="form-select">{% for p in pueblos %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select>
+                            <select name="pueblo_fin" class="form-select">{% for p in pueblos %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-3">
+                        <label class="form-label fw-bold text-danger">Condición de Cierre</label>
+                        <select name="tipo_final" class="form-select mb-2">
+                            <option value="N">Continúa</option>
+                            <option value="F">Cierre Físico</option>
+                            <option value="C">Confluencia en otra carretera</option>
+                        </select>
+                        <label class="small text-muted">Si es confluencia, elegir destino:</label>
+                        <select name="confluye_con" class="form-select">
+                            <option value="">-- Ninguna --</option>
+                            {% for c in carreteras %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" name="btn_tramo" class="btn btn-success w-100 mt-4">Ejecutar Transacción</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">Grilla de Inventario Vial</div>
+            <div class="table-responsive p-3">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Carretera</th>
+                            <th>KM</th>
+                            <th>Trayecto</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in tramos %}
+                        <tr>
+                            <td><strong>{{ t.carretera.nombre }}</strong> <br><small class="text-muted">{{ t.carretera.categoria.nombre }}</small></td>
+                            <td>{{ t.km_inicio }} - {{ t.km_fin }}</td>
+                            <td>{{ t.pueblo_inicio }} → {{ t.pueblo_fin }}</td>
+                            <td>
+                                {% if t.tipo_final == 'C' %}
+                                <span class="badge bg-info text-dark">Confluye en: {{ t.confluye_con.nombre }}</span>
+                                {% elif t.tipo_final == 'F' %}
+                                <span class="badge bg-danger">Fin Físico</span>
+                                {% else %}
+                                <span class="badge bg-light text-dark">Continuo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
